@@ -1,5 +1,8 @@
 package com.illicitintelligence.kotlinapplication.adapter
 
+import android.content.Intent
+import android.content.IntentFilter
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,8 +13,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.illicitintelligence.kotlinapplication.R
 import com.illicitintelligence.kotlinapplication.model.repository.RepoResult
 
-class RepositoryAdapter(var repositories: List<RepoResult>, var repositoryDelegate: RepositoryDelegate) :
+class RepositoryAdapter(var repositories: List<RepoResult>/*, var repositoryDelegate: RepositoryDelegate*/) :
     RecyclerView.Adapter<RepositoryAdapter.RepositoryViewHolder>() {
+    companion object {
+        val REPO_FILTER = "from.repo.adapter"
+        val VALUE_KEY = "from.repo"
+    }
+
+
     private lateinit var slideAnimation: Animation
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RepositoryViewHolder {
 
@@ -33,21 +42,40 @@ class RepositoryAdapter(var repositories: List<RepoResult>, var repositoryDelega
 
         holder.apply {
             itemView.animation = slideAnimation
-            fullNameTextView.text = repositories[position].fullName
-            descriptionTextView.text = repositories[position].description
+            fullNameTextView.text = repositories[position].fullName.addPrefix()
+            descriptionTextView.text = repositories[position].description?.addDescriptionPrefix()?:"No Descrioption".addDescriptionPrefix()
             urlTextView.text = repositories[position].url
             itemView.setOnClickListener {
-                repositoryDelegate.getCommits(repositories[position].owner.login, repositories[position].name)
+                //                repositoryDelegate.getCommits(repositories[position].owner.login, repositories[position].name)
+                val intent = Intent(REPO_FILTER)
+                intent.putExtra(
+                    VALUE_KEY,
+                    arrayOf(repositories[position].owner.login, repositories[position].name)
+                )
+                itemView.context.sendBroadcast(intent)
             }
+            Log.d("TAG_X", "Cube of $position is ${position.cubeNumber()}")
+
         }
 
-
-
     }
 
-    interface RepositoryDelegate {
-        fun getCommits(userName: String, repositoryName: String)
+
+    fun String.addPrefix(): String {
+        return "RE: $this"
     }
+
+    fun String.addDescriptionPrefix(): String {
+        return "Description: $this"
+    }
+
+    fun Int.cubeNumber(): Int {
+        return (this * this * this)
+    }
+
+//    interface RepositoryDelegate {
+//        fun getCommits(userName: String, repositoryName: String)
+//    }
 
     inner class RepositoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val fullNameTextView = itemView.findViewById(R.id.full_name_textview) as TextView
